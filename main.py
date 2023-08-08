@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 from dotenv import load_dotenv
 import os
+import time
 
 # Load variables from .env file
 load_dotenv()
@@ -57,21 +58,34 @@ def generate_video(prompt, avatar_url, gender):
             "source_url": avatar_url
         }
     
-
-    response = requests.post(url, json=payload, headers=headers)
-    if response.status_code == 201:
-        print(response.text)
-        res = response.json()
-        id = res["id"]
-        getresponse =  requests.get(f"{url}/{id}", headers=headers)
-        print(getresponse)
-        if getresponse.status_code == 200:
-            res = getresponse.json()
-            print(res)
-            if res["status"] == "done":
-                video_url =  res["result_url"]
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        if response.status_code == 201:
+            print(response.text)
+            res = response.json()
+            id = res["id"]
+            status = "created"
+            while status == "created":
+                getresponse =  requests.get(f"{url}/{id}", headers=headers)
+                print(getresponse)
+                if getresponse.status_code == 200:
+                    status = res["status"]
+                    res = getresponse.json()
+                    print(res)
+                    if res["status"] == "done":
+                        video_url =  res["result_url"]
+                    else:
+                        time.sleep(10)
+                else:
+                    status = "error"
+                    video_url = "error"
+        else:
+            video_url = "error"   
+    except Exception as e:
+        print(e)      
+        video_url = "error"      
         
-        return video_url
+    return video_url
 
 def main():
     st.set_page_config(page_title="Avatar Video Generator", page_icon=":movie_camera:")
@@ -89,12 +103,20 @@ def main():
     # Generate video button
     if st.button("Generate Video"):
         st.text("Generating video...")
-        video_url = generate_video(prompt, avatar_url, avatar_selection)  # Call your video generation function here
-        st.text("Video generated!")
+        try:
+            video_url = generate_video(prompt, avatar_url, avatar_selection)  # Call your video generation function here
+            if video_url!= "error":
+                st.text("Video generated!")
 
-        # Placeholder for displaying generated video
-        st.subheader("Generated Video")
-        st.video(video_url)  # Replace with the actual path
+                # Placeholder for displaying generated video
+                st.subheader("Generated Video")
+                st.video(video_url)  # Replace with the actual path
+            else:
+                st.text("Sorry... Try again")
+        except Exception as e:
+            print(e)
+            st.text("Sorry... Try again")
+
 
 if __name__ == "__main__":
     main()
