@@ -4,6 +4,7 @@ This is a Python script that generates an avatar video from text using the D-ID 
 The script allows you to select between male and female avatars, input a text prompt, and generate a video with the selected avatar 
 narrating the provided text.
 
+![Example Output](images/output.png)
 ## Prerequisites
 
 - Python 3.6+
